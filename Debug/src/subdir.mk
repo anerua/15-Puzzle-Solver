@@ -4,18 +4,12 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/Node.cpp \
-../src/Path.cpp \
 ../src/Stash.cpp 
 
 OBJS += \
-./src/Node.o \
-./src/Path.o \
 ./src/Stash.o 
 
 CPP_DEPS += \
-./src/Node.d \
-./src/Path.d \
 ./src/Stash.d 
 
 
