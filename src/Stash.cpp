@@ -7,15 +7,14 @@
 // Date Created: 23 October 2020 12:14
 //============================================================================
 
+
 #include <iostream>
 #include <sstream>
 #include <array>
 #include <vector>
-#include <algorithm>
 #include <ctime>
 #include <unordered_set>
-#include "Node.h"
-#include "Path.h"
+#include <queue>
 
 using namespace std;
 
@@ -34,38 +33,6 @@ struct hash<array<T, N>> {
 		return h;
 	}
 };
-}
-
-bool pathLength(Path p1, Path p2) {
-	return (p1.getPathLength() > p2.getPathLength());
-}
-
-bool first(array<int, 2> p1, array<int, 2> p2) {
-	return (p1[0] > p2[0]);
-}
-
-Path aStar(Path start, Node goal) {
-	vector<Path> queue = { start };
-	vector<array<int, 16>> extendedNodes = { };
-	Path extendedPath = start;
-	while ((queue.size() > 0) && !(extendedPath.getLeaf().equals(goal))) {
-		queue.pop_back();
-		Node leafNode = extendedPath.getLeaf();
-		vector<Node> connectedNodes = leafNode.getConnectedNodes();
-		extendedNodes.push_back(leafNode.getFlattened());
-
-		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
-			if (!(find(extendedNodes.begin(), extendedNodes.end(),
-					connectedNodes[i].getFlattened()) != extendedNodes.end())) {
-				vector<Node> tempExtended = extendedPath.getNodes();
-				tempExtended.push_back(connectedNodes[i]);
-				queue.push_back(Path(tempExtended));
-			}
-		}
-		sort(queue.begin(), queue.end(), pathLength);
-		extendedPath = queue.back(); // move to bottom
-	}
-	return extendedPath;
 }
 
 int pathLength(vector<array<int, 16>> path, int meta) {
@@ -135,18 +102,14 @@ int pathLength(vector<array<int, 16>> path, int meta) {
 }
 
 vector<array<int, 16>> bestPath(vector<vector<array<int, 16>>> queue,
-		int *bestPos, int meta) {
-	/*
-	 * row:
-	 * 	0 = first row
-	 * 	16 = full board
-	 */
+		int *bestPos) {
+
 	unsigned int i = 0;
 	*bestPos = 0;
 	vector<array<int, 16>> best = queue[i];
 	++i;
 	for (; i < queue.size(); i++) {
-		if (pathLength(best, meta) < pathLength(queue[i], meta)) {
+		if (best.back()[0] < queue[i].back()[0]) {
 			continue;
 		} else {
 			best = queue[i];
@@ -253,40 +216,48 @@ string printNode(array<int, 16> node) {
 
 string printPath(vector<array<int, 16>> path) {
 	stringstream ss;
-	for (unsigned int i = 0; i < path.size(); i++) {
+	for (unsigned int i = 0; i < path.size() - 1; i++) {
 		ss << "\n   |   \n   v   \n";
 		ss << printNode(path[i]);
 	}
 	ss << "\nNumber of moves: ";
-	ss << path.size() - 1;
+	ss << path.size() - 2;
 
 	return ss.str();
 }
 
 vector<array<int, 16>> aStarFirstCol(vector<array<int, 16>> start) {
 	array<int, 4> goal = { 1, 5, 9, 13 };
-	vector<vector<array<int, 16>>> queue = { start };
+	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
+		return left.back()[0] > right.back()[0];
+	};
+	priority_queue<vector<array<int, 16>>, vector<vector<array<int, 16>>>, decltype(cmp)> queue(cmp);
+	queue.push(start);
 	unordered_set<array<int, 16>> extendedNodes;
 	vector<array<int, 16>> extendedPath = start;
-	array<int, 4> check = { extendedPath.back()[0], extendedPath.back()[4],
-			extendedPath.back()[8], extendedPath.back()[12] };
-	int pop_index = 0;
+	array<int, 4> check = { extendedPath[extendedPath.size() - 2][0], extendedPath[extendedPath.size() - 2][4],
+			extendedPath[extendedPath.size() - 2][8], extendedPath[extendedPath.size() - 2][12] };
+
 	while ((queue.size() > 0) && !(check == goal)) {
-		queue.erase(queue.begin() + pop_index);
-		array<int, 16> leafNode = extendedPath.back();
+		queue.pop();
+		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
 		extendedNodes.insert(leafNode);
+		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
 				vector<array<int, 16>> tempExtended = extendedPath;
 				tempExtended.push_back(connectedNodes[i]);
-				queue.push_back(tempExtended);
+				array<int, 16> pathLengthArray;
+				pathLengthArray.fill(pathLength(tempExtended, 1));
+				tempExtended.push_back(pathLengthArray);
+				queue.push(tempExtended);
 			}
 		}
-		extendedPath = bestPath(queue, &pop_index, 1);
-		check = { extendedPath.back()[0], extendedPath.back()[4],
-				extendedPath.back()[8], extendedPath.back()[12] };
+		extendedPath = queue.top();
+		check = { extendedPath[extendedPath.size() - 2][0], extendedPath[extendedPath.size() - 2][4],
+				extendedPath[extendedPath.size() - 2][8], extendedPath[extendedPath.size() - 2][12] };
 	}
 	cout << "done with first colunm" << endl;
 	return extendedPath;
@@ -294,82 +265,122 @@ vector<array<int, 16>> aStarFirstCol(vector<array<int, 16>> start) {
 
 vector<array<int, 16>> aStarSecondRow(vector<array<int, 16>> start) {
 	array<int, 4> goal = { 5, 6, 7, 8 };
-	vector<vector<array<int, 16>>> queue = { start };
+	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
+		return left.back()[0] > right.back()[0];
+	};
+	priority_queue<vector<array<int, 16>>, vector<vector<array<int, 16>>>, decltype(cmp)> queue(cmp);
+	queue.push(start);
 	unordered_set<array<int, 16>> extendedNodes;
 	vector<array<int, 16>> extendedPath = start;
-	array<int, 4> check = { extendedPath.back()[4], extendedPath.back()[5],
-			extendedPath.back()[6], extendedPath.back()[7] };
-	int pop_index = 0;
+	array<int, 4> check = { extendedPath[extendedPath.size() - 2][4], extendedPath[extendedPath.size() - 2][5],
+			extendedPath[extendedPath.size() - 2][6], extendedPath[extendedPath.size() - 2][7] };
+
 	while ((queue.size() > 0) && !(check == goal)) {
-		queue.erase(queue.begin() + pop_index);
-		array<int, 16> leafNode = extendedPath.back();
+		queue.pop();
+		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
 		extendedNodes.insert(leafNode);
+		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
 				vector<array<int, 16>> tempExtended = extendedPath;
 				tempExtended.push_back(connectedNodes[i]);
-				queue.push_back(tempExtended);
+				array<int, 16> pathLengthArray;
+				pathLengthArray.fill(pathLength(tempExtended, 2));
+				tempExtended.push_back(pathLengthArray);
+				queue.push(tempExtended);
 			}
 		}
-		extendedPath = bestPath(queue, &pop_index, 2);
-		check = { extendedPath.back()[4], extendedPath.back()[5],
-				extendedPath.back()[6], extendedPath.back()[7] };
+		extendedPath = queue.top();
+		check = { extendedPath[extendedPath.size() - 2][4], extendedPath[extendedPath.size() - 2][5],
+				extendedPath[extendedPath.size() - 2][6], extendedPath[extendedPath.size() - 2][7] };
 	}
 	cout << "done with second row" << endl;
 	return extendedPath;
 }
 
 vector<array<int, 16>> aStarFirstRow(vector<array<int, 16>> start) {
+	clock_t startFirst = clock();
 	array<int, 4> goal = { 1, 2, 3, 4 };
-	vector<vector<array<int, 16>>> queue = { start };
+
+	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
+		return left.back()[0] > right.back()[0];
+	};
+	priority_queue<vector<array<int, 16>>, vector<vector<array<int, 16>>>, decltype(cmp)> queue(cmp);
+	queue.push(start);
 	unordered_set<array<int, 16>> extendedNodes;
 	vector<array<int, 16>> extendedPath = start;
-	array<int, 4> check = { extendedPath.back()[0], extendedPath.back()[1],
-			extendedPath.back()[2], extendedPath.back()[3] };
-	int pop_index = 0;
+	array<int, 4> check = { extendedPath[extendedPath.size() - 2][0], extendedPath[extendedPath.size() - 2][1],
+			extendedPath[extendedPath.size() - 2][2], extendedPath[extendedPath.size() - 2][3] };
+	double part1, part2, part3 = 0;
 	while ((queue.size() > 0) && !(check == goal)) {
-		queue.erase(queue.begin() + pop_index);
-		array<int, 16> leafNode = extendedPath.back();
+		clock_t p1 = clock();
+		queue.pop();
+		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
 		extendedNodes.insert(leafNode);
+		extendedPath.pop_back();
 
+		clock_t p2 = clock();
+		part1 += (double) (p2 - p1) / CLOCKS_PER_SEC;
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
 				vector<array<int, 16>> tempExtended = extendedPath;
 				tempExtended.push_back(connectedNodes[i]);
-				queue.push_back(tempExtended);
+				array<int, 16> pathLengthArray;
+				pathLengthArray.fill(pathLength(tempExtended, 0));
+				tempExtended.push_back(pathLengthArray);
+				queue.push(tempExtended);
 			}
 		}
-		extendedPath = bestPath(queue, &pop_index, 0);
-		check = { extendedPath.back()[0], extendedPath.back()[1],
-				extendedPath.back()[2], extendedPath.back()[3] };
+
+		clock_t p3 = clock();
+		part2 += (double) (p3 - p2) / CLOCKS_PER_SEC;
+		extendedPath = queue.top();
+		check = { extendedPath[extendedPath.size() - 2][0], extendedPath[extendedPath.size() - 2][1],
+					extendedPath[extendedPath.size() - 2][2], extendedPath[extendedPath.size() - 2][3] };
+		clock_t endPart = clock();
+		part3 += (double) (endPart - p3) / CLOCKS_PER_SEC;
 	}
-	cout << "done with first row" << endl;
+	clock_t endFirst = clock();
+	double totalFirst = (double) (endFirst - startFirst) / CLOCKS_PER_SEC;
+	cout << "Total: " << totalFirst << " seconds." << endl;
+	cout << "Part 1: " << part1 << " seconds;" << " = " << (int)((part1/totalFirst)*100) << "%" << endl;
+	cout << "Part 2: " << part2 << " seconds;" << " = " << (int)((part2/totalFirst)*100) << "%" << endl;
+	cout << "Part 3: " << part3 << " seconds;" << " = " << (int)((part3/totalFirst)*100) << "%" << endl;
+//	cout << "done with first row" << endl;
 	return extendedPath;
 }
 
 vector<array<int, 16>> aStar(vector<array<int, 16>> start,
 		array<int, 16> goal) {
-	vector<vector<array<int, 16>>> queue = { start };
+
+	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
+		return left.back()[0] > right.back()[0];
+	};
+	priority_queue<vector<array<int, 16>>, vector<vector<array<int, 16>>>, decltype(cmp)> queue(cmp);
+	queue.push(start);
 	unordered_set<array<int, 16>> extendedNodes;
 	vector<array<int, 16>> extendedPath = start;
-	int pop_index = 0;
-	while ((queue.size() > 0) && !(extendedPath.back() == goal)) {
-		queue.erase(queue.begin() + pop_index);
-		array<int, 16> leafNode = extendedPath.back();
+	while ((queue.size() > 0) && !(extendedPath[extendedPath.size() - 2] == goal)) {
+		queue.pop();
+		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
 		extendedNodes.insert(leafNode);
+		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
 				vector<array<int, 16>> tempExtended = extendedPath;
 				tempExtended.push_back(connectedNodes[i]);
-				queue.push_back(tempExtended);
+				array<int, 16> pathLengthArray;
+				pathLengthArray.fill(pathLength(tempExtended, 16));
+				tempExtended.push_back(pathLengthArray);
+				queue.push(tempExtended);
 			}
 		}
-		extendedPath = bestPath(queue, &pop_index, 16);
+		extendedPath = queue.top();
 	}
 	return extendedPath;
 }
@@ -404,209 +415,46 @@ int main() {
 				2 };
 	array<int, 16> game10 = { 0, 10, 7, 5, 3, 9, 8, 12, 6, 1, 15, 13, 11, 2, 14,
 				4 };
+	array<int, 16> solv = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0 };
 
-	array<int, 16> solv =
-			{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0 };
+	array<int, 16> rootLength;
+	rootLength.fill(0);
 
-//	Node node1 = Node(test1);
-//	Node node2 = Node(test2);
-//	Node node3 = Node(test3);
-//	Node node4 = Node(test4);
-//	Node solved = Node(solv);
-//	Node empty1 = Node();
-//	Node empty2 = Node();
+	vector<array<int, 16>> testPath1 = { test1, rootLength };
+	vector<array<int, 16>> testPath2 = { test2, rootLength };
+	vector<array<int, 16>> testPath3 = { test3, rootLength };
+	vector<array<int, 16>> testPath4 = { test4, rootLength };
+	vector<array<int, 16>> gamePath1 = { game1, rootLength };
+	vector<array<int, 16>> gamePath2 = { game2, rootLength };
+	vector<array<int, 16>> gamePath3 = { game3, rootLength };
+	vector<array<int, 16>> gamePath4 = { game4, rootLength };
+	vector<array<int, 16>> gamePath5 = { game5, rootLength };
+	vector<array<int, 16>> gamePath6 = { game6, rootLength };
+	vector<array<int, 16>> gamePath7 = { game7, rootLength };
+	vector<array<int, 16>> gamePath8 = { game8, rootLength };
+	vector<array<int, 16>> gamePath9 = { game9, rootLength };
+	vector<array<int, 16>> gamePath10 = { game10, rootLength };
+	vector<array<int, 16>> trivialPath = { solv, rootLength };
 
-	/*cout << "====================" << endl;
-	 cout << "Print test:" << endl;
-	 cout << "====================" << endl;
-	 cout << "Node 1:" << endl;
-	 cout << node1.print() << endl;
-	 cout << "Node 2:" << endl;
-	 cout << node2.print() << endl;
-	 cout << "Node 3:" << endl;
-	 cout << node3.print() << endl;
-	 cout << "Node 4:" << endl;
-	 cout << node4.print() << endl;
-	 cout << "Empty Node 1:" << endl;
-	 cout << empty1.print() << endl;
-	 cout << "====================" << endl << endl;
-
-	 cout << "====================" << endl;
-	 cout << "Equality test:" << endl;
-	 cout << "====================" << endl;
-	 cout << "0: " << node1.equals(node2) << endl;
-	 cout << "1: " << node1.equals(node1) << endl;
-	 cout << "0: " << node3.equals(node4) << endl;
-	 cout << "1: " << node3.equals(node3) << endl;
-	 cout << "0: " << empty1.equals(node1) << endl;
-	 cout << "1: " << empty1.equals(empty2) << endl;
-	 cout << "1: " << empty1.equals(empty1) << endl;
-	 cout << "====================" << endl << endl;
-
-	 cout << "====================" << endl;
-	 cout << "Next moves test:" << endl;
-	 cout << "====================" << endl;
-	 cout << "Node 1:" << endl;
-	 array<Node,4> next = node1.getConnectedNodes();
-	 cout << "-------" << endl;
-	 cout << "Up:" << endl;
-	 cout << next[0].print() << endl;
-	 cout << "Down:" << endl;
-	 cout << next[1].print() << endl;
-	 cout << "Left:" << endl;
-	 cout << next[2].print() << endl;
-	 cout << "Right:" << endl;
-	 cout << next[3].print() << endl;
-	 cout << "-------" << endl;
-	 cout << "Empty Node 1:" << endl;
-	 next = empty1.getConnectedNodes();
-	 cout << "-------" << endl;
-	 cout << "Up:" << endl;
-	 cout << next[0].print() << endl;
-	 cout << "Down:" << endl;
-	 cout << next[1].print() << endl;
-	 cout << "Left:" << endl;
-	 cout << next[2].print() << endl;
-	 cout << "Right:" << endl;
-	 cout << next[3].print() << endl;
-	 cout << "====================" << endl << endl;*/
-
-//	vector<Node> testPath1 = { node1 };
-//	vector<Node> testPath2 = { node2 };
-//	vector<Node> testPath3 = { node3 };
-//	vector<Node> testPath4 = { node4 };
-//	vector<Node> solvPath = { solved };
-	vector<array<int, 16>> testPath1 = { test1 };
-	vector<array<int, 16>> testPath2 = { test2 };
-	vector<array<int, 16>> testPath3 = { test3 };
-	vector<array<int, 16>> testPath4 = { test4 };
-	vector<array<int, 16>> gamePath1 = { game1 };
-	vector<array<int, 16>> gamePath2 = { game2 };
-	vector<array<int, 16>> gamePath3 = { game3 };
-	vector<array<int, 16>> gamePath4 = { game4 };
-	vector<array<int, 16>> gamePath5 = { game5 };
-	vector<array<int, 16>> gamePath6 = { game6 };
-	vector<array<int, 16>> gamePath7 = { game7 };
-	vector<array<int, 16>> gamePath8 = { game8 };
-	vector<array<int, 16>> gamePath9 = { game9 };
-	vector<array<int, 16>> gamePath10 = { game10 };
-	vector<array<int, 16>> trivialPath = { solv };
-
-//	Path path1 = Path(testPath1);
-//	Path path2 = Path(testPath2);
-//	Path path3 = Path(testPath3);
-//	Path path4 = Path(testPath4);
-//	Path trivialPath = Path(solvPath);
-//	Path path6 = Path();
-
-	/*	cout << "====================" << endl;
-	 cout << "Print test:" << endl;
-	 cout << "====================" << endl;
-	 cout << "Path 1:" << endl;
-	 cout << path1.print() << endl;
-	 cout << "--------------------" << endl;
-	 cout << "Path 2:" << endl;
-	 cout << path2.print() << endl;
-	 cout << "--------------------" << endl;
-	 cout << "Path 3:" << endl;
-	 cout << path3.print() << endl;
-	 cout << "--------------------" << endl;
-	 cout << "Path 4:" << endl;
-	 cout << path4.print() << endl;
-	 cout << "--------------------" << endl;
-	 cout << "Path 5:" << endl;
-	 cout << path5.print() << endl;
-	 cout << "--------------------" << endl;
-	 cout << "Path 6:" << endl;
-	 cout << path6.print() << endl;
-	 cout << "====================" << endl << endl;*/
-
-	/*vector<array<int,2>> vec1 = {{1,2},{3,4}};
-	 array<int,2> vec2 = {3,5};
-	 if (vec1[0] == vec2) {
-	 cout << "We are equal" << endl;
-	 } else {
-	 cout << "I hate her" << endl;
-	 }
-	 if (find(vec1.begin(), vec1.end(), vec2) != vec1.end()){
-	 cout << "Present sir" << endl;
-	 } else {
-	 cout << "Absent sir" << endl;
-	 }
-	 sort(vec1.begin(), vec1.end(), first);
-	 cout << vec1[0][0] << " " << vec1[1][0] << endl;*/
-
-//	Path solution = aStar(path2, solved);
-//
-//	cout << "Solution:" << endl;
-//	cout << solution.print() << endl;
+//	auto paths = {gamePath1, gamePath2, gamePath3, gamePath4, gamePath5, gamePath6, gamePath7, gamePath8, gamePath9, gamePath10};
 	clock_t startTime = clock();
-//	vector<array<int, 16>> solution = aStarFirstRow(gamePath5);
-//	vector<array<int, 16>> solution = aStarFirstCol(gamePath4);
-//	vector<array<int, 16>> solution = aStar(gamePath2, solv);
-//	vector<array<int, 16>> solution = aStarFirstCol(aStarFirstRow(gamePath1));
-//	vector<array<int, 16>> solution = aStarSecondRow(aStarFirstRow(gamePath1));
-//	vector<array<int, 16>> solution = aStar(aStarFirstRow(gamePath2), solv);
-	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath10)), solv);
-//	vector<array<int, 16>> solution = aStar(aStarFirstCol(aStarSecondRow(aStarFirstRow(gamePath10))), solv);
-//	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstCol(aStarFirstRow(gamePath1))), solv);
-//	vector<array<int, 16>> solution = aStar(aStarFirstCol(aStarSecondRow(aStarFirstRow(gamePath1))), solv);
+//	for (auto p: paths){
+//		vector<array<int, 16>> solution = aStarFirstRow(p);
+//	}
+//	vector<array<int, 16>> solution = aStarFirstRow(gamePath10);
+//	vector<array<int, 16>> solution = aStar(gamePath10, solv);
+//	vector<array<int, 16>> solution = aStar(aStarFirstRow(gamePath10), solv);
+	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath4)), solv);
+//	vector<array<int, 16>> solution = aStar(aStarFirstCol(aStarSecondRow(aStarFirstRow(gamePath4))), solv);
+//	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstCol(aStarFirstRow(gamePath10))), solv);
+
+
 
 	clock_t programTime = clock() - startTime;
 	cout << "Solution:" << endl;
 	cout << printPath(solution) << endl;
 	cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC
 			<< " seconds." << endl;
-
-//	clock_t startTime = clock();
-//	vector<array<int, 16>> solution = aStar(gamePath2, solv);
-//	clock_t programTime = clock() - startTime;
-//	cout << "Solution:" << endl;
-//	cout << printPath(solution) << endl;
-//	cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC
-//			<< " seconds." << endl;
-
-//	unordered_set<array<int, 16>> example;
-//	example.insert(test1);
-//	example.insert(test2);
-//	example.insert(test3);
-//	example.insert(test1);
-//
-//	unordered_set<array<int, 16>>::iterator itr;
-//
-//	for (itr = example.begin(); itr != example.end(); itr++) {
-//		array<int, 16> temp = *itr;
-//		cout << "[" << flush;
-//		for (int i = 0; i < 16; i++) {
-//			cout << temp[i] << ", " << flush;
-//		}
-//		cout << "]" << endl;
-//	}
-//
-//	if (example.find(test4) != example.end()) {
-//		cout << "found!" << endl;
-//	} else {
-//		cout << "Not found" << endl;
-//	}
-
-//	array<int,16> check = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0,
-//			15 };
-//	vector<array<int,16>> t1 = {test1};
-//	if (t1.front() == check) {
-//		cout << "Yes!" << endl;
-//	}
-
-//	array<int,4> sliced = {check[0], check[1], check[2], check[3]};
-//	for (int i = 0; i<4; i++) {
-//		cout << sliced[i] << " " << flush;
-//	}
-
-//	for (int i = 0; i < 3; ++i){
-//		cout << "[" << flush;
-//		for (int j = 0; j < 16; ++j){
-//			cout << "" << endl;
-//		}
-//	}
 
 	return 0;
 }
