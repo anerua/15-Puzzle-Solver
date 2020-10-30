@@ -394,10 +394,14 @@ int main() {
 			2 };
 	array<int, 16> game10 = { 0, 10, 7, 5, 3, 9, 8, 12, 6, 1, 15, 13, 11, 2, 14,
 			4 };
-	array<int, 16> game11 = { 6,2,8,11,12,7,15,5,13,3,10,0,4,9,1,14};
-	array<int, 16> game12 = { 9,13,8,10,11,7,5,2,12,6,3,15,1,4,14,0 };
-	array<int, 16> game13 = { 12,6,8,4,15,0,2,7,3,5,11,1,10,14,13,9 };
-	array<int, 16> game14 = { 14,1,3,4,9,7,2,12,10,8,13,11,15,5,6,0 };
+	array<int, 16> game11 = { 6,2,8,11,12,7,15,5,13,3,10,0,4,9,1,14 }; //F
+	array<int, 16> game12 = { 9,13,8,10,11,7,5,2,12,6,3,15,1,4,14,0 }; //F
+	array<int, 16> game13 = { 12,6,8,4,15,0,2,7,3,5,11,1,10,14,13,9 }; //F
+	array<int, 16> game14 = { 14,1,3,4,9,7,2,12,10,8,13,11,15,5,6,0 }; //F
+	array<int, 16> game15 = { 11,6,8,0,14,9,2,5,7,15,3,4,1,13,12,10 }; //P
+	array<int, 16> game16 = { 0,6,8,3,7,11,2,4,5,1,10,15,14,13,12,9 }; //P
+	array<int, 16> game17 = { 15,11,13,12,14,10,8,9,7,2,5,1,3,6,4,0 }; // hardest1
+	array<int, 16> game18 = { 15,14,8,12,10,11,9,13,2,6,5,1,3,7,4,0 }; // hardest2
 	array<int, 16> solved =
 			{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0 };
 
@@ -422,6 +426,10 @@ int main() {
 	vector<array<int, 16>> gamePath12 = { game12, rootLength };
 	vector<array<int, 16>> gamePath13 = { game13, rootLength };
 	vector<array<int, 16>> gamePath14 = { game14, rootLength };
+	vector<array<int, 16>> gamePath15 = { game15, rootLength };
+	vector<array<int, 16>> gamePath16 = { game16, rootLength };
+	vector<array<int, 16>> gamePath17 = { game17, rootLength };
+	vector<array<int, 16>> gamePath18 = { game18, rootLength };
 	vector<array<int, 16>> trivialPath = { solved, rootLength };
 
 //	auto paths = {gamePath1, gamePath2, gamePath3, gamePath4, gamePath5, gamePath6, gamePath7, gamePath8, gamePath9, gamePath10};
@@ -432,7 +440,7 @@ int main() {
 //	vector<array<int, 16>> solution = aStarFirstRow(gamePath10);
 //	vector<array<int, 16>> solution = aStar(gamePath10, solv);
 //	vector<array<int, 16>> solution = aStar(aStarFirstRow(gamePath10), solv);
-	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath14)), solved);
+	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath18)), solved);
 //	vector<array<int, 16>> solution = aStar(aStarFirstCol(aStarSecondRow(aStarFirstRow(gamePath11))), solved);
 //	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstCol(aStarFirstRow(gamePath10))), solv);
 
