@@ -14,6 +14,9 @@
 #include <ctime>
 #include <unordered_set>
 #include <queue>
+#include <algorithm>
+#include <stdio.h>
+#include <string>
 
 using namespace std;
 
@@ -382,6 +385,51 @@ vector<array<int, 16>> aStar(vector<array<int, 16>> start,
 	return extendedPath;
 }
 
+bool validInput(string rawInput){
+	int noComma = count(rawInput.begin(), rawInput.end(), ',');
+	// check for more than required cells
+	if (noComma != 15) {
+		cout << " ERROR: Too much/too little game cells provided" << endl;
+		return false;
+	} else {
+		vector<string> tokens;
+		stringstream check(rawInput);
+		string intermediate;
+		vector<string> valids = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "0"};
+		unordered_set<string> validStream;
+		// check cell values
+		while(getline(check, intermediate, ',')){
+			if ( !(find(valids.begin(), valids.end(), intermediate) != valids.end()) ){
+				cout << "ERROR: " << intermediate << " is not a valid cell value" << endl;
+				return false;
+			} else {
+				validStream.insert(intermediate);
+			}
+		}
+		// check number of valid cell values
+		if (validStream.size() != 16){
+			cout << "ERROR: Insufficient/duplicate valid cell values provided" << endl;
+			return false;
+		}
+
+	}
+	return true;
+}
+
+bool verifyInput(string rawInput) {
+	return validInput(rawInput);
+}
+
+string getInput() {
+	string rawInput;
+	cout << "Input the game as a comma-separated sequence of cell values" << endl;
+	cout << "with the empty cell represented as 0" << endl;
+	cout << "Do not put spaces between commas and values:" << endl;
+	cin >> rawInput;
+	cout << endl;
+	return rawInput;
+}
+
 int main() {
 
 	array<int, 16> test1 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0,
@@ -451,22 +499,30 @@ int main() {
 	vector<array<int, 16>> trivialPath = { solved, rootLength };
 
 //	auto paths = {gamePath1, gamePath2, gamePath3, gamePath4, gamePath5, gamePath6, gamePath7, gamePath8, gamePath9, gamePath10};
-	clock_t startTime = clock();
+//	clock_t startTime = clock();
 //	for (auto p: paths){
 //		vector<array<int, 16>> solution = aStarFirstRow(p);
 //	}
 //	vector<array<int, 16>> solution = aStarFirstRow(gamePath10);
 //	vector<array<int, 16>> solution = aStar(gamePath10, solv);
 //	vector<array<int, 16>> solution = aStar(aStarFirstRow(gamePath10), solv);
-	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath2)), solved);
+//	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath2)), solved);
 //	vector<array<int, 16>> solution = aStar(aStarFirstCol(aStarSecondRow(aStarFirstRow(gamePath11))), solved);
 //	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstCol(aStarFirstRow(gamePath10))), solv);
 
-	clock_t programTime = clock() - startTime;
-	cout << "Solution:" << endl;
-	cout << printPath(solution) << endl;
-	cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC
-			<< " seconds." << endl;
+//	clock_t programTime = clock() - startTime;
+//	cout << "Solution:" << endl;
+//	cout << printPath(solution) << endl;
+//	cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC
+//			<< " seconds." << endl;
+
+	string rawInput = getInput();
+	if (verifyInput(rawInput)) {
+		cout << "Valid input!" << endl;
+	} else {
+		cout << "Wrong input!" << endl;
+	}
+
 
 	return 0;
 }
