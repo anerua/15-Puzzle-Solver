@@ -185,20 +185,38 @@ vector<array<int, 16>> getConnectedNodes(array<int, 16> node) {
 
 string printNode(array<int, 16> node) {
 	stringstream ss;
+	ss << ".===================.\n";
+	ss << "| ";
 	for (int i = 0; i < 16; i++) {
-		ss << node[i];
-		ss << "  ";
-		if ((i % 4) == 3) {
-			ss << "\n";
+		if (node[i] < 10) {
+			if (node[i] != 0){
+				ss << node[i];
+			} else {
+				ss << " ";
+			}
+			ss << " ";
+		} else {
+			if (node[i] != 0) {
+				ss << node[i];
+			} else {
+				ss << " ";
+			}
+		}
+		ss << " | ";
+		if ((i % 4) == 3 && (i != 15)) {
+			ss << "\n|-------------------|\n| ";
 		}
 	}
+	ss << "\n*===================*\n";
 	return ss.str();
 }
 
 string printPath(vector<array<int, 16>> path) {
 	stringstream ss;
 	for (unsigned int i = 0; i < path.size() - 1; i++) {
-		ss << "\n   |   \n   v   \n";
+		if (i > 0) {
+			ss << "\n         |\n         v\n";
+		}
 		ss << printNode(path[i]);
 	}
 	ss << "\nNumber of moves: ";
@@ -440,7 +458,7 @@ int main() {
 //	vector<array<int, 16>> solution = aStarFirstRow(gamePath10);
 //	vector<array<int, 16>> solution = aStar(gamePath10, solv);
 //	vector<array<int, 16>> solution = aStar(aStarFirstRow(gamePath10), solv);
-	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath18)), solved);
+	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath2)), solved);
 //	vector<array<int, 16>> solution = aStar(aStarFirstCol(aStarSecondRow(aStarFirstRow(gamePath11))), solved);
 //	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstCol(aStarFirstRow(gamePath10))), solv);
 
