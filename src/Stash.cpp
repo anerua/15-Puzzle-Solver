@@ -20,6 +20,9 @@
 
 using namespace std;
 
+/*
+ * Hash function for array unordered set
+ */
 namespace std {
 template<typename T, size_t N>
 struct hash<array<T, N>> {
@@ -43,8 +46,7 @@ int pathLength(vector<array<int, 16>> path, int meta) {
 	/*
 	 * meta:
 	 * 	0 = first row
-	 * 	1 = first column
-	 * 	2 = second row
+	 * 	1 = second row
 	 * 	16 = full board
 	 */
 	int noOfNodes = path.size();
@@ -65,18 +67,6 @@ int pathLength(vector<array<int, 16>> path, int meta) {
 		}
 		break;
 	case 1:
-		for (int i = 0; i < 16; i++) {
-			if (leaf[i] == 1 || leaf[i] == 5 || leaf[i] == 9 || leaf[i] == 13) {
-				if (leaf[i] != (i + 1)) {
-					++hammingDistance;
-				}
-				manhattanDistance += abs(leaf[i] - (i + 1));
-			} else {
-				continue;
-			}
-		}
-		break;
-	case 2:
 		for (int i = 0; i < 16; i++) {
 			if (leaf[i] == 5 || leaf[i] == 6 || leaf[i] == 7 || leaf[i] == 8) {
 				if (leaf[i] != (i + 1)) {
@@ -258,7 +248,7 @@ vector<array<int, 16>> aStarSecondRow(vector<array<int, 16>> start) {
 				vector<array<int, 16>> tempExtended = extendedPath;
 				tempExtended.push_back(connectedNodes[i]);
 				array<int, 16> pathLengthArray;
-				pathLengthArray.fill(pathLength(tempExtended, 2));
+				pathLengthArray.fill(pathLength(tempExtended, 1));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
 			}
@@ -358,7 +348,8 @@ void progressMessage(int status) {
 			cout << "\tOne or more invalid cell values provided" << endl;
 			break;
 		case 3:
-			cout << "\tInsufficient/duplicate valid cell values provided" << endl;
+			cout << "\tInsufficient/duplicate valid cell values provided"
+					<< endl;
 			break;
 		case 4:
 			cout << "\tPuzzle is unsolvable" << endl;
@@ -440,7 +431,8 @@ int verifyInput(string rawInput) {
 					!= valids.end())) {
 				status = 2;
 			} else {
-				if (!(find(validStream.begin(), validStream.end(), intermediate) != validStream.end())) {
+				if (!(find(validStream.begin(), validStream.end(), intermediate)
+						!= validStream.end())) {
 					validStream.push_back(intermediate);
 				}
 			}
