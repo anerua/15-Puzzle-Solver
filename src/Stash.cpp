@@ -477,6 +477,10 @@ int main() {
 	array<int, 16> rootLength; // initial length
 	rootLength.fill(0);
 
+	cout << "===========================================================" << endl;
+	cout << "                     15 Puzzle Solver                      " << endl;
+	cout << "===========================================================" << endl << endl;
+
 	string rawInput = getInput();
 	int status = verifyInput(rawInput);
 	progressMessage(status);
