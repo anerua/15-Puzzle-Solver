@@ -231,47 +231,6 @@ string printPath(vector<array<int, 16>> path) {
 	return ss.str();
 }
 
-vector<array<int, 16>> aStarFirstCol(vector<array<int, 16>> start) {
-	array<int, 4> goal = { 1, 5, 9, 13 };
-	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
-		return left.back()[0] > right.back()[0];
-	};
-	priority_queue<vector<array<int, 16>>, vector<vector<array<int, 16>>>,
-			decltype(cmp)> queue(cmp);
-	queue.push(start);
-	unordered_set<array<int, 16>> extendedNodes;
-	vector<array<int, 16>> extendedPath = start;
-	array<int, 4> check = { extendedPath[extendedPath.size() - 2][0],
-			extendedPath[extendedPath.size() - 2][4],
-			extendedPath[extendedPath.size() - 2][8],
-			extendedPath[extendedPath.size() - 2][12] };
-
-	while ((queue.size() > 0) && !(check == goal)) {
-		queue.pop();
-		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
-		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
-		extendedNodes.insert(leafNode);
-		extendedPath.pop_back();
-
-		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
-			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
-				vector<array<int, 16>> tempExtended = extendedPath;
-				tempExtended.push_back(connectedNodes[i]);
-				array<int, 16> pathLengthArray;
-				pathLengthArray.fill(pathLength(tempExtended, 1));
-				tempExtended.push_back(pathLengthArray);
-				queue.push(tempExtended);
-			}
-		}
-		extendedPath = queue.top();
-		check = { extendedPath[extendedPath.size() - 2][0],
-				extendedPath[extendedPath.size() - 2][4],
-				extendedPath[extendedPath.size() - 2][8],
-				extendedPath[extendedPath.size() - 2][12] };
-	}
-	return extendedPath;
-}
-
 vector<array<int, 16>> aStarSecondRow(vector<array<int, 16>> start) {
 	array<int, 4> goal = { 5, 6, 7, 8 };
 	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
