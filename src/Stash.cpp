@@ -14,6 +14,9 @@
 #include <ctime>
 #include <unordered_set>
 #include <queue>
+#include <algorithm>
+#include <stdio.h>
+#include <string>
 
 using namespace std;
 
@@ -33,6 +36,8 @@ struct hash<array<T, N>> {
 	}
 };
 }
+
+array<int, 16> inputState;
 
 int pathLength(vector<array<int, 16>> path, int meta) {
 	/*
@@ -143,6 +148,7 @@ vector<array<int, 16>> getConnectedNodes(array<int, 16> node) {
 	for (int i = 0; i < 16; i++) {
 		if (node[i] == 0) {
 			emptyPos = i;
+			break;
 		}
 	}
 	int emptyRow = emptyPos / 4;
@@ -185,20 +191,38 @@ vector<array<int, 16>> getConnectedNodes(array<int, 16> node) {
 
 string printNode(array<int, 16> node) {
 	stringstream ss;
+	ss << ".===================.\n";
+	ss << "| ";
 	for (int i = 0; i < 16; i++) {
-		ss << node[i];
-		ss << "  ";
-		if ((i % 4) == 3) {
-			ss << "\n";
+		if (node[i] < 10) {
+			if (node[i] != 0) {
+				ss << node[i];
+			} else {
+				ss << " ";
+			}
+			ss << " ";
+		} else {
+			if (node[i] != 0) {
+				ss << node[i];
+			} else {
+				ss << " ";
+			}
+		}
+		ss << " | ";
+		if ((i % 4) == 3 && (i != 15)) {
+			ss << "\n|-------------------|\n| ";
 		}
 	}
+	ss << "\n*===================*\n";
 	return ss.str();
 }
 
 string printPath(vector<array<int, 16>> path) {
 	stringstream ss;
 	for (unsigned int i = 0; i < path.size() - 1; i++) {
-		ss << "\n   |   \n   v   \n";
+		if (i > 0) {
+			ss << "\n         |\n         v\n";
+		}
 		ss << printNode(path[i]);
 	}
 	ss << "\nNumber of moves: ";
@@ -364,91 +388,247 @@ vector<array<int, 16>> aStar(vector<array<int, 16>> start,
 	return extendedPath;
 }
 
+void progressMessage(int status) {
+	if (status) {
+		cout << "\nInput error:" << endl;
+		switch (status) {
+		case 1:
+			cout << "\tToo much/little board cells provided" << endl;
+			break;
+		case 2:
+			cout << "\tOne or more invalid cell values provided" << endl;
+			break;
+		case 3:
+			cout << "\tInsufficient/duplicate valid cell values provided" << endl;
+			break;
+		case 4:
+			cout << "\tPuzzle is unsolvable" << endl;
+		}
+	} else {
+		cout << "\tPuzzle is solvable!" << endl;
+	}
+}
+
+int inversions(array<int, 16> inputGame) {
+	int invCount = 0;
+	for (int i = 0; i < 15; i++) {
+		if (inputGame[i] == 0) {
+			continue;
+		}
+		for (int j = i + 1; j < 16; j++) {
+			if (inputGame[j] == 0) {
+				continue;
+			}
+			if (inputGame[i] > inputGame[j]) {
+				++invCount;
+			}
+		}
+	}
+	return invCount;
+}
+
+bool isSolvable(array<int, 16> inputGame) {
+	/* RULES OF SOLVABILITY:
+	 * Let the board be NxN
+	 *
+	 * 1. If N is odd, then puzzle instance is solvable if number of
+	 * 	  inversions is even in the input state.
+	 *
+	 * 2. If N is even, puzzle instance is solvable if:
+	 * 	  a. the blank is on an even row counting from the bottom and
+	 * 	  	 number of inversions is odd.
+	 * 	  b. the blank is on an odd row counting from the bottom and
+	 * 	     number of inversions is even.
+	 *
+	 * 3. For all other cases, the puzzle instance is not solvable.
+	 *
+	 * Reference: https://wwww.geeksforgeeks.org/check-instance-15-puzzle-solvable/amp/
+	 */
+
+	// get the empty space index
+	int emptyPos;
+	for (int i = 0; i < 16; i++) {
+		if (inputGame[i] == 0) {
+			emptyPos = i;
+			break;
+		}
+	}
+	int emptyRow = 4 - (emptyPos / 4); // counting from bottom
+	int invCount = inversions(inputGame);
+	bool solvable =
+			((!(emptyRow & 1) && (invCount & 1))
+					|| ((emptyRow & 1) && !(invCount & 1))) ? true : false;
+	return solvable;
+}
+
+int verifyInput(string rawInput) {
+	int status = 0;
+	cout << "Checking input format..." << flush;
+	int noComma = count(rawInput.begin(), rawInput.end(), ',');
+	// check for more than required cells
+	if (noComma != 15) {
+		status = 1;
+	} else {
+		vector<string> tokens;
+		stringstream check(rawInput);
+		string intermediate;
+		vector<string> valids = { "1", "2", "3", "4", "5", "6", "7", "8", "9",
+				"10", "11", "12", "13", "14", "15", "0" };
+		vector<string> validStream;
+		// check cell values
+		while (getline(check, intermediate, ',')) {
+			if (!(find(valids.begin(), valids.end(), intermediate)
+					!= valids.end())) {
+				status = 2;
+			} else {
+				if (!(find(validStream.begin(), validStream.end(), intermediate) != validStream.end())) {
+					validStream.push_back(intermediate);
+				}
+			}
+		}
+		// check number of valid cell values
+		if (validStream.size() != 16) {
+			status = 3;
+		} else {
+			cout << "OK" << endl << "Checking solvability..." << endl;
+			array<int, 16> inputGame;
+			int i = 0;
+			for (string cell : validStream) {
+				inputGame[i] = stoi(cell);
+				++i;
+			}
+			if (!isSolvable(inputGame)) {
+				status = 4;
+			} else {
+				inputState = inputGame;
+			}
+		}
+	}
+	return status;
+}
+
+string getInput() {
+	string rawInput;
+	cout << "Input the game as a comma-separated sequence of cell values"
+			<< endl;
+	cout << "with the empty cell represented as 0" << endl;
+	cout << "Do not put spaces between commas and values:" << endl;
+	cin >> rawInput;
+	cout << endl;
+	return rawInput;
+}
+
 int main() {
 
-	array<int, 16> test1 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0,
-			15 };
-	array<int, 16> test2 = { 1, 2, 3, 4, 5, 6, 7, 8, 0, 15, 14, 13, 12, 11, 10,
-			9 };
-	array<int, 16> test3 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 13, 14,
-			15 };
-	array<int, 16> test4 = { 1, 2, 3, 4, 5, 6, 7, 8, 14, 0, 15, 9, 10, 13, 12,
-			11 };
-	array<int, 16> game1 = { 4, 8, 9, 13, 12, 6, 5, 1, 10, 14, 7, 3, 11, 0, 2,
-			15 };
-	array<int, 16> game2 = { 11, 3, 8, 4, 10, 9, 14, 0, 2, 5, 7, 15, 1, 13, 6,
-			12 };
-	array<int, 16> game3 = { 7, 8, 9, 2, 11, 12, 14, 10, 0, 13, 1, 4, 5, 15, 6,
-			3 };
-	array<int, 16> game4 = { 7, 10, 3, 0, 15, 6, 4, 8, 12, 1, 11, 5, 14, 13, 9,
-			2 };
-	array<int, 16> game5 = { 2, 15, 8, 5, 10, 12, 3, 6, 0, 11, 4, 1, 9, 14, 7,
-			13 };
-	array<int, 16> game6 = { 1, 6, 2, 7, 5, 11, 0, 3, 9, 10, 15, 4, 13, 14, 12,
-			8 };
-	array<int, 16> game7 = { 6, 14, 3, 7, 8, 4, 15, 12, 13, 0, 5, 1, 10, 2, 9,
-			11 };
-	array<int, 16> game8 = { 3, 8, 11, 4, 10, 15, 14, 9, 6, 1, 2, 7, 0, 12, 13,
-			5 };
-	array<int, 16> game9 = { 1, 4, 11, 10, 14, 8, 7, 6, 0, 5, 9, 3, 13, 12, 15,
-			2 };
-	array<int, 16> game10 = { 0, 10, 7, 5, 3, 9, 8, 12, 6, 1, 15, 13, 11, 2, 14,
-			4 };
-	array<int, 16> game11 = { 6,2,8,11,12,7,15,5,13,3,10,0,4,9,1,14 }; //F
-	array<int, 16> game12 = { 9,13,8,10,11,7,5,2,12,6,3,15,1,4,14,0 }; //F
-	array<int, 16> game13 = { 12,6,8,4,15,0,2,7,3,5,11,1,10,14,13,9 }; //F
-	array<int, 16> game14 = { 14,1,3,4,9,7,2,12,10,8,13,11,15,5,6,0 }; //F
-	array<int, 16> game15 = { 11,6,8,0,14,9,2,5,7,15,3,4,1,13,12,10 }; //P
-	array<int, 16> game16 = { 0,6,8,3,7,11,2,4,5,1,10,15,14,13,12,9 }; //P
-	array<int, 16> game17 = { 15,11,13,12,14,10,8,9,7,2,5,1,3,6,4,0 }; // hardest1
-	array<int, 16> game18 = { 15,14,8,12,10,11,9,13,2,6,5,1,3,7,4,0 }; // hardest2
-	array<int, 16> solved =
-			{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0 };
+//	array<int, 16> test1 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0,
+//			15 };
+//	array<int, 16> test2 = { 1, 2, 3, 4, 5, 6, 7, 8, 0, 15, 14, 13, 12, 11, 10,
+//			9 };
+//	array<int, 16> test3 = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 13, 14,
+//			15 };
+//	array<int, 16> test4 = { 1, 2, 3, 4, 5, 6, 7, 8, 14, 0, 15, 9, 10, 13, 12,
+//			11 };
+//	array<int, 16> game1 = { 4, 8, 9, 13, 12, 6, 5, 1, 10, 14, 7, 3, 11, 0, 2,
+//			15 };
+//	array<int, 16> game2 = { 11, 3, 8, 4, 10, 9, 14, 0, 2, 5, 7, 15, 1, 13, 6,
+//			12 };
+//	array<int, 16> game3 = { 7, 8, 9, 2, 11, 12, 14, 10, 0, 13, 1, 4, 5, 15, 6,
+//			3 };
+//	array<int, 16> game4 = { 7, 10, 3, 0, 15, 6, 4, 8, 12, 1, 11, 5, 14, 13, 9,
+//			2 };
+//	array<int, 16> game5 = { 2, 15, 8, 5, 10, 12, 3, 6, 0, 11, 4, 1, 9, 14, 7,
+//			13 };
+//	array<int, 16> game6 = { 1, 6, 2, 7, 5, 11, 0, 3, 9, 10, 15, 4, 13, 14, 12,
+//			8 };
+//	array<int, 16> game7 = { 6, 14, 3, 7, 8, 4, 15, 12, 13, 0, 5, 1, 10, 2, 9,
+//			11 };
+//	array<int, 16> game8 = { 3, 8, 11, 4, 10, 15, 14, 9, 6, 1, 2, 7, 0, 12, 13,
+//			5 };
+//	array<int, 16> game9 = { 1, 4, 11, 10, 14, 8, 7, 6, 0, 5, 9, 3, 13, 12, 15,
+//			2 };
+//	array<int, 16> game10 = { 0, 10, 7, 5, 3, 9, 8, 12, 6, 1, 15, 13, 11, 2, 14,
+//			4 };
+//	array<int, 16> game11 = { 6, 2, 8, 11, 12, 7, 15, 5, 13, 3, 10, 0, 4, 9, 1,
+//			14 }; //F
+//	array<int, 16> game12 = { 9, 13, 8, 10, 11, 7, 5, 2, 12, 6, 3, 15, 1, 4, 14,
+//			0 }; //F
+//	array<int, 16> game13 = { 12, 6, 8, 4, 15, 0, 2, 7, 3, 5, 11, 1, 10, 14, 13,
+//			9 }; //F
+//	array<int, 16> game14 = { 14, 1, 3, 4, 9, 7, 2, 12, 10, 8, 13, 11, 15, 5, 6,
+//			0 }; //F
+//	array<int, 16> game15 = { 11, 6, 8, 0, 14, 9, 2, 5, 7, 15, 3, 4, 1, 13, 12,
+//			10 }; //P
+//	array<int, 16> game16 = { 0, 6, 8, 3, 7, 11, 2, 4, 5, 1, 10, 15, 14, 13, 12,
+//			9 }; //P
+//	array<int, 16> game17 = { 15, 11, 13, 12, 14, 10, 8, 9, 7, 2, 5, 1, 3, 6, 4,
+//			0 }; // hardest1
+//	array<int, 16> game18 = { 15, 14, 8, 12, 10, 11, 9, 13, 2, 6, 5, 1, 3, 7, 4,
+//			0 }; // hardest2
+	array<int, 16> solved = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+			0 };
 
 	array<int, 16> rootLength;
 	rootLength.fill(0);
 
-	vector<array<int, 16>> testPath1 = { test1, rootLength };
-	vector<array<int, 16>> testPath2 = { test2, rootLength };
-	vector<array<int, 16>> testPath3 = { test3, rootLength };
-	vector<array<int, 16>> testPath4 = { test4, rootLength };
-	vector<array<int, 16>> gamePath1 = { game1, rootLength };
-	vector<array<int, 16>> gamePath2 = { game2, rootLength };
-	vector<array<int, 16>> gamePath3 = { game3, rootLength };
-	vector<array<int, 16>> gamePath4 = { game4, rootLength };
-	vector<array<int, 16>> gamePath5 = { game5, rootLength };
-	vector<array<int, 16>> gamePath6 = { game6, rootLength };
-	vector<array<int, 16>> gamePath7 = { game7, rootLength };
-	vector<array<int, 16>> gamePath8 = { game8, rootLength };
-	vector<array<int, 16>> gamePath9 = { game9, rootLength };
-	vector<array<int, 16>> gamePath10 = { game10, rootLength };
-	vector<array<int, 16>> gamePath11 = { game11, rootLength };
-	vector<array<int, 16>> gamePath12 = { game12, rootLength };
-	vector<array<int, 16>> gamePath13 = { game13, rootLength };
-	vector<array<int, 16>> gamePath14 = { game14, rootLength };
-	vector<array<int, 16>> gamePath15 = { game15, rootLength };
-	vector<array<int, 16>> gamePath16 = { game16, rootLength };
-	vector<array<int, 16>> gamePath17 = { game17, rootLength };
-	vector<array<int, 16>> gamePath18 = { game18, rootLength };
-	vector<array<int, 16>> trivialPath = { solved, rootLength };
+//	vector<array<int, 16>> testPath1 = { test1, rootLength };
+//	vector<array<int, 16>> testPath2 = { test2, rootLength };
+//	vector<array<int, 16>> testPath3 = { test3, rootLength };
+//	vector<array<int, 16>> testPath4 = { test4, rootLength };
+//	vector<array<int, 16>> gamePath1 = { game1, rootLength };
+//	vector<array<int, 16>> gamePath2 = { game2, rootLength };
+//	vector<array<int, 16>> gamePath3 = { game3, rootLength };
+//	vector<array<int, 16>> gamePath4 = { game4, rootLength };
+//	vector<array<int, 16>> gamePath5 = { game5, rootLength };
+//	vector<array<int, 16>> gamePath6 = { game6, rootLength };
+//	vector<array<int, 16>> gamePath7 = { game7, rootLength };
+//	vector<array<int, 16>> gamePath8 = { game8, rootLength };
+//	vector<array<int, 16>> gamePath9 = { game9, rootLength };
+//	vector<array<int, 16>> gamePath10 = { game10, rootLength };
+//	vector<array<int, 16>> gamePath11 = { game11, rootLength };
+//	vector<array<int, 16>> gamePath12 = { game12, rootLength };
+//	vector<array<int, 16>> gamePath13 = { game13, rootLength };
+//	vector<array<int, 16>> gamePath14 = { game14, rootLength };
+//	vector<array<int, 16>> gamePath15 = { game15, rootLength };
+//	vector<array<int, 16>> gamePath16 = { game16, rootLength };
+//	vector<array<int, 16>> gamePath17 = { game17, rootLength };
+//	vector<array<int, 16>> gamePath18 = { game18, rootLength };
+//	vector<array<int, 16>> trivialPath = { solved, rootLength };
 
 //	auto paths = {gamePath1, gamePath2, gamePath3, gamePath4, gamePath5, gamePath6, gamePath7, gamePath8, gamePath9, gamePath10};
-	clock_t startTime = clock();
+//	clock_t startTime = clock();
 //	for (auto p: paths){
 //		vector<array<int, 16>> solution = aStarFirstRow(p);
 //	}
 //	vector<array<int, 16>> solution = aStarFirstRow(gamePath10);
 //	vector<array<int, 16>> solution = aStar(gamePath10, solv);
 //	vector<array<int, 16>> solution = aStar(aStarFirstRow(gamePath10), solv);
-	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath18)), solved);
+//	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(gamePath2)), solved);
 //	vector<array<int, 16>> solution = aStar(aStarFirstCol(aStarSecondRow(aStarFirstRow(gamePath11))), solved);
 //	vector<array<int, 16>> solution = aStar(aStarSecondRow(aStarFirstCol(aStarFirstRow(gamePath10))), solv);
 
-	clock_t programTime = clock() - startTime;
-	cout << "Solution:" << endl;
-	cout << printPath(solution) << endl;
-	cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC
-			<< " seconds." << endl;
+//	clock_t programTime = clock() - startTime;
+//	cout << "Solution:" << endl;
+//	cout << printPath(solution) << endl;
+//	cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC
+//			<< " seconds." << endl;
+
+	string rawInput = getInput();
+	int status = verifyInput(rawInput);
+	progressMessage(status);
+	if (!status) {
+		cout << "Solving...\n" << endl;
+		vector<array<int, 16>> inputPath = { inputState, rootLength };
+		clock_t startTime = clock();
+
+		vector<array<int, 16>> solution = aStar(
+				aStarSecondRow(aStarFirstRow(inputPath)), solved);
+
+		clock_t programTime = clock() - startTime;
+		cout << "Solution:" << endl;
+		cout << printPath(solution) << endl;
+		cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC
+				<< " seconds." << endl;
+	}
 
 	return 0;
 }
