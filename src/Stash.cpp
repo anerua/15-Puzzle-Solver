@@ -235,12 +235,12 @@ vector<array<int, 16>> aStarSecondRow(vector<array<int, 16>> start) {
 			extendedPath[extendedPath.size() - 2][5],
 			extendedPath[extendedPath.size() - 2][6],
 			extendedPath[extendedPath.size() - 2][7] };
-
+	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
 	while ((queue.size() > 0) && !(check == goal)) {
 		queue.pop();
 		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
-		extendedNodes.insert(leafNode);
+//		extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
@@ -251,6 +251,7 @@ vector<array<int, 16>> aStarSecondRow(vector<array<int, 16>> start) {
 				pathLengthArray.fill(pathLength(tempExtended, 1));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
+				extendedNodes.insert(connectedNodes[i]); //newly added
 			}
 		}
 		extendedPath = queue.top();
@@ -277,11 +278,12 @@ vector<array<int, 16>> aStarFirstRow(vector<array<int, 16>> start) {
 			extendedPath[extendedPath.size() - 2][1],
 			extendedPath[extendedPath.size() - 2][2],
 			extendedPath[extendedPath.size() - 2][3] };
+	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
 	while ((queue.size() > 0) && !(check == goal)) {
 		queue.pop();
 		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
-		extendedNodes.insert(leafNode);
+//		extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
@@ -292,6 +294,7 @@ vector<array<int, 16>> aStarFirstRow(vector<array<int, 16>> start) {
 				pathLengthArray.fill(pathLength(tempExtended, 0));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
+				extendedNodes.insert(connectedNodes[i]); //newly added
 			}
 		}
 		extendedPath = queue.top();
@@ -314,12 +317,13 @@ vector<array<int, 16>> aStar(vector<array<int, 16>> start,
 	queue.push(start);
 	unordered_set<array<int, 16>> extendedNodes;
 	vector<array<int, 16>> extendedPath = start;
+	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
 	while ((queue.size() > 0)
 			&& !(extendedPath[extendedPath.size() - 2] == goal)) {
 		queue.pop();
 		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
-		extendedNodes.insert(leafNode);
+		// extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
@@ -330,6 +334,7 @@ vector<array<int, 16>> aStar(vector<array<int, 16>> start,
 				pathLengthArray.fill(pathLength(tempExtended, 16));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
+				extendedNodes.insert(connectedNodes[i]); //newly added
 			}
 		}
 		extendedPath = queue.top();
