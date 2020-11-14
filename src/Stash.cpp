@@ -40,9 +40,9 @@ struct hash<array<T, N>> {
 };
 }
 
-array<int, 16> inputState;
+array<char, 16> inputState;
 
-int pathLength(vector<array<int, 16>> path, int meta) {
+int pathLength(vector<array<char, 16>> path, int meta) {
 	/*
 	 * meta:
 	 * 	0 = first row
@@ -52,7 +52,7 @@ int pathLength(vector<array<int, 16>> path, int meta) {
 	int noOfNodes = path.size();
 	int hammingDistance = 0;
 	int manhattanDistance = 0;
-	array<int, 16> leaf = path.back();
+	array<char, 16> leaf = path.back();
 	switch (meta) {
 	case 0:
 		for (int i = 0; i < 16; i++) {
@@ -95,24 +95,7 @@ int pathLength(vector<array<int, 16>> path, int meta) {
 	return noOfNodes + hammingDistance + manhattanDistance;
 }
 
-bool colSolved(array<int, 16> node, int col) {
-	if (col != 0) {
-		return false;
-	} else {
-		for (int i = 0; i < 4; i++) {
-			if (node[i * 4] == 0) {
-				return false;
-			} else if (node[i * 4] != (i * 4) + 1) {
-				return false;
-			} else {
-				continue;
-			}
-		}
-		return true;
-	}
-}
-
-bool rowSolved(array<int, 16> node, int row) {
+bool rowSolved(array<char, 16> node, int row) {
 	for (int i = 0; i < 4; i++) {
 		if (node[(i % 4) + (row * 4)] == 0) {
 			return false;
@@ -130,8 +113,8 @@ bool rowSolved(array<int, 16> node, int row) {
 	}
 }
 
-vector<array<int, 16>> getConnectedNodes(array<int, 16> node) {
-	vector<array<int, 16>> children;
+vector<array<char, 16>> getConnectedNodes(array<char, 16> node) {
+	vector<array<char, 16>> children;
 
 	// get the empty space index
 	int emptyPos;
@@ -146,7 +129,7 @@ vector<array<int, 16>> getConnectedNodes(array<int, 16> node) {
 
 	// Move up
 	if ((emptyRow != 0) && !(rowSolved(node, emptyRow - 1))) {
-		array<int, 16> tempState = node;
+		array<char, 16> tempState = node;
 		tempState[emptyPos] = tempState[emptyPos - 4];
 		tempState[emptyPos - 4] = 0;
 		children.push_back(tempState);
@@ -154,15 +137,15 @@ vector<array<int, 16>> getConnectedNodes(array<int, 16> node) {
 
 	// Move down
 	if (emptyRow != 3) {
-		array<int, 16> tempState = node;
+		array<char, 16> tempState = node;
 		tempState[emptyPos] = tempState[emptyPos + 4];
 		tempState[emptyPos + 4] = 0;
 		children.push_back(tempState);
 	}
 
 	// Move left
-	if ((emptyCol != 0) && !(colSolved(node, emptyCol - 1))) {
-		array<int, 16> tempState = node;
+	if (emptyCol != 0) {
+		array<char, 16> tempState = node;
 		tempState[emptyPos] = tempState[emptyPos - 1];
 		tempState[emptyPos - 1] = 0;
 		children.push_back(tempState);
@@ -170,7 +153,7 @@ vector<array<int, 16>> getConnectedNodes(array<int, 16> node) {
 
 	// Move right
 	if (emptyCol != 3) {
-		array<int, 16> tempState = node;
+		array<char, 16> tempState = node;
 		tempState[emptyPos] = tempState[emptyPos + 1];
 		tempState[emptyPos + 1] = 0;
 		children.push_back(tempState);
@@ -179,21 +162,21 @@ vector<array<int, 16>> getConnectedNodes(array<int, 16> node) {
 	return children;
 }
 
-string printNode(array<int, 16> node) {
+string printNode(array<char, 16> node) {
 	stringstream ss;
 	ss << ".===================.\n";
 	ss << "| ";
 	for (int i = 0; i < 16; i++) {
 		if (node[i] < 10) {
 			if (node[i] != 0) {
-				ss << node[i];
+				ss << (int) node[i];
 			} else {
 				ss << " ";
 			}
 			ss << " ";
 		} else {
 			if (node[i] != 0) {
-				ss << node[i];
+				ss << (int) node[i];
 			} else {
 				ss << " ";
 			}
@@ -207,7 +190,7 @@ string printNode(array<int, 16> node) {
 	return ss.str();
 }
 
-string printPath(vector<array<int, 16>> path) {
+string printPath(vector<array<char, 16>> path) {
 	stringstream ss;
 	for (unsigned int i = 0; i < path.size() - 1; i++) {
 		if (i > 0) {
@@ -221,33 +204,33 @@ string printPath(vector<array<int, 16>> path) {
 	return ss.str();
 }
 
-vector<array<int, 16>> aStarSecondRow(vector<array<int, 16>> start) {
-	array<int, 4> goal = { 5, 6, 7, 8 };
-	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
+vector<array<char, 16>> aStarSecondRow(vector<array<char, 16>> start) {
+	array<char, 4> goal = { 5, 6, 7, 8 };
+	auto cmp = [](vector<array<char, 16>> left, vector<array<char, 16>> right) {
 		return left.back()[0] > right.back()[0];
 	};
-	priority_queue<vector<array<int, 16>>, vector<vector<array<int, 16>>>,
+	priority_queue<vector<array<char, 16>>, vector<vector<array<char, 16>>>,
 			decltype(cmp)> queue(cmp);
 	queue.push(start);
-	unordered_set<array<int, 16>> extendedNodes;
-	vector<array<int, 16>> extendedPath = start;
-	array<int, 4> check = { extendedPath[extendedPath.size() - 2][4],
+	unordered_set<array<char, 16>> extendedNodes;
+	vector<array<char, 16>> extendedPath = start;
+	array<char, 4> check = { extendedPath[extendedPath.size() - 2][4],
 			extendedPath[extendedPath.size() - 2][5],
 			extendedPath[extendedPath.size() - 2][6],
 			extendedPath[extendedPath.size() - 2][7] };
 	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
 	while ((queue.size() > 0) && !(check == goal)) {
 		queue.pop();
-		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
-		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
+		array<char, 16> leafNode = extendedPath[extendedPath.size() - 2];
+		vector<array<char, 16>> connectedNodes = getConnectedNodes(leafNode);
 //		extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
-				vector<array<int, 16>> tempExtended = extendedPath;
+				vector<array<char, 16>> tempExtended = extendedPath;
 				tempExtended.push_back(connectedNodes[i]);
-				array<int, 16> pathLengthArray;
+				array<char, 16> pathLengthArray;
 				pathLengthArray.fill(pathLength(tempExtended, 1));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
@@ -263,34 +246,34 @@ vector<array<int, 16>> aStarSecondRow(vector<array<int, 16>> start) {
 	return extendedPath;
 }
 
-vector<array<int, 16>> aStarFirstRow(vector<array<int, 16>> start) {
-	array<int, 4> goal = { 1, 2, 3, 4 };
+vector<array<char, 16>> aStarFirstRow(vector<array<char, 16>> start) {
+	array<char, 4> goal = { 1, 2, 3, 4 };
 
-	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
+	auto cmp = [](vector<array<char, 16>> left, vector<array<char, 16>> right) {
 		return left.back()[0] > right.back()[0];
 	};
-	priority_queue<vector<array<int, 16>>, vector<vector<array<int, 16>>>,
+	priority_queue<vector<array<char, 16>>, vector<vector<array<char, 16>>>,
 			decltype(cmp)> queue(cmp);
 	queue.push(start);
-	unordered_set<array<int, 16>> extendedNodes;
-	vector<array<int, 16>> extendedPath = start;
-	array<int, 4> check = { extendedPath[extendedPath.size() - 2][0],
+	unordered_set<array<char, 16>> extendedNodes;
+	vector<array<char, 16>> extendedPath = start;
+	array<char, 4> check = { extendedPath[extendedPath.size() - 2][0],
 			extendedPath[extendedPath.size() - 2][1],
 			extendedPath[extendedPath.size() - 2][2],
 			extendedPath[extendedPath.size() - 2][3] };
 	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
 	while ((queue.size() > 0) && !(check == goal)) {
 		queue.pop();
-		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
-		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
+		array<char, 16> leafNode = extendedPath[extendedPath.size() - 2];
+		vector<array<char, 16>> connectedNodes = getConnectedNodes(leafNode);
 //		extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
-				vector<array<int, 16>> tempExtended = extendedPath;
+				vector<array<char, 16>> tempExtended = extendedPath;
 				tempExtended.push_back(connectedNodes[i]);
-				array<int, 16> pathLengthArray;
+				array<char, 16> pathLengthArray;
 				pathLengthArray.fill(pathLength(tempExtended, 0));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
@@ -306,31 +289,31 @@ vector<array<int, 16>> aStarFirstRow(vector<array<int, 16>> start) {
 	return extendedPath;
 }
 
-vector<array<int, 16>> aStar(vector<array<int, 16>> start,
-		array<int, 16> goal) {
+vector<array<char, 16>> aStar(vector<array<char, 16>> start,
+		array<char, 16> goal) {
 
-	auto cmp = [](vector<array<int, 16>> left, vector<array<int, 16>> right) {
+	auto cmp = [](vector<array<char, 16>> left, vector<array<char, 16>> right) {
 		return left.back()[0] > right.back()[0];
 	};
-	priority_queue<vector<array<int, 16>>, vector<vector<array<int, 16>>>,
+	priority_queue<vector<array<char, 16>>, vector<vector<array<char, 16>>>,
 			decltype(cmp)> queue(cmp);
 	queue.push(start);
-	unordered_set<array<int, 16>> extendedNodes;
-	vector<array<int, 16>> extendedPath = start;
+	unordered_set<array<char, 16>> extendedNodes;
+	vector<array<char, 16>> extendedPath = start;
 	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
 	while ((queue.size() > 0)
 			&& !(extendedPath[extendedPath.size() - 2] == goal)) {
 		queue.pop();
-		array<int, 16> leafNode = extendedPath[extendedPath.size() - 2];
-		vector<array<int, 16>> connectedNodes = getConnectedNodes(leafNode);
+		array<char, 16> leafNode = extendedPath[extendedPath.size() - 2];
+		vector<array<char, 16>> connectedNodes = getConnectedNodes(leafNode);
 		// extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
 
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
-				vector<array<int, 16>> tempExtended = extendedPath;
+				vector<array<char, 16>> tempExtended = extendedPath;
 				tempExtended.push_back(connectedNodes[i]);
-				array<int, 16> pathLengthArray;
+				array<char, 16> pathLengthArray;
 				pathLengthArray.fill(pathLength(tempExtended, 16));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
@@ -364,7 +347,7 @@ void progressMessage(int status) {
 	}
 }
 
-int inversions(array<int, 16> inputGame) {
+int inversions(array<char, 16> inputGame) {
 	int invCount = 0;
 	for (int i = 0; i < 15; i++) {
 		if (inputGame[i] == 0) {
@@ -382,7 +365,7 @@ int inversions(array<int, 16> inputGame) {
 	return invCount;
 }
 
-bool isSolvable(array<int, 16> inputGame) {
+bool isSolvable(array<char, 16> inputGame) {
 	/* RULES OF SOLVABILITY:
 	 * Let the board be NxN
 	 *
@@ -447,10 +430,10 @@ int verifyInput(string rawInput) {
 			status = 3;
 		} else {
 			cout << "OK" << endl << "Checking solvability..." << endl;
-			array<int, 16> inputGame;
+			array<char, 16> inputGame;
 			int i = 0;
 			for (string cell : validStream) {
-				inputGame[i] = stoi(cell);
+				inputGame[i] = (char) stoi(cell);
 				++i;
 			}
 			if (!isSolvable(inputGame)) {
@@ -476,10 +459,10 @@ string getInput() {
 
 int main() {
 
-	array<int, 16> solved = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+	array<char, 16> solved = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 			0 };
 
-	array<int, 16> rootLength; // initial length
+	array<char, 16> rootLength; // initial length
 	rootLength.fill(0);
 
 	cout << "===========================================================" << endl;
@@ -491,10 +474,10 @@ int main() {
 	progressMessage(status);
 	if (!status) {
 		cout << "Solving...\n" << endl;
-		vector<array<int, 16>> inputPath = { inputState, rootLength };
+		vector<array<char, 16>> inputPath = { inputState, rootLength };
 		clock_t startTime = clock();
 
-		vector<array<int, 16>> solution = aStar(
+		vector<array<char, 16>> solution = aStar(
 				aStarSecondRow(aStarFirstRow(inputPath)), solved);
 
 		clock_t programTime = clock() - startTime;
