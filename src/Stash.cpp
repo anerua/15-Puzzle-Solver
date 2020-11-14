@@ -55,7 +55,7 @@ int pathLength(vector<array<char, 16>> path, int meta) {
 	array<char, 16> leaf = path.back();
 	switch (meta) {
 	case 0:
-		for (int i = 0; i < 16; i++) {
+		for (char i = 0; i < 16; i++) {
 			if (leaf[i] == 1 || leaf[i] == 2 || leaf[i] == 3 || leaf[i] == 4) {
 				if (leaf[i] != (i + 1)) {
 					++hammingDistance;
@@ -67,7 +67,7 @@ int pathLength(vector<array<char, 16>> path, int meta) {
 		}
 		break;
 	case 1:
-		for (int i = 0; i < 16; i++) {
+		for (char i = 0; i < 16; i++) {
 			if (leaf[i] == 5 || leaf[i] == 6 || leaf[i] == 7 || leaf[i] == 8) {
 				if (leaf[i] != (i + 1)) {
 					++hammingDistance;
@@ -79,7 +79,7 @@ int pathLength(vector<array<char, 16>> path, int meta) {
 		}
 		break;
 	case 16:
-		for (int i = 0; i < 16; i++) {
+		for (char i = 0; i < 16; i++) {
 			if (leaf[i] == 0) {
 				continue;
 			} else {
@@ -96,7 +96,7 @@ int pathLength(vector<array<char, 16>> path, int meta) {
 }
 
 bool rowSolved(array<char, 16> node, int row) {
-	for (int i = 0; i < 4; i++) {
+	for (char i = 0; i < 4; i++) {
 		if (node[(i % 4) + (row * 4)] == 0) {
 			return false;
 		} else if (node[(i % 4) + (row * 4)] != (i % 4) + (row * 4) + 1) {
@@ -117,15 +117,15 @@ vector<array<char, 16>> getConnectedNodes(array<char, 16> node) {
 	vector<array<char, 16>> children;
 
 	// get the empty space index
-	int emptyPos;
-	for (int i = 0; i < 16; i++) {
+	char emptyPos;
+	for (char i = 0; i < 16; i++) {
 		if (node[i] == 0) {
 			emptyPos = i;
 			break;
 		}
 	}
-	int emptyRow = emptyPos / 4;
-	int emptyCol = emptyPos % 4;
+	char emptyRow = emptyPos / 4;
+	char emptyCol = emptyPos % 4;
 
 	// Move up
 	if ((emptyRow != 0) && !(rowSolved(node, emptyRow - 1))) {
@@ -166,7 +166,7 @@ string printNode(array<char, 16> node) {
 	stringstream ss;
 	ss << ".===================.\n";
 	ss << "| ";
-	for (int i = 0; i < 16; i++) {
+	for (char i = 0; i < 16; i++) {
 		if (node[i] < 10) {
 			if (node[i] != 0) {
 				ss << (int) node[i];
@@ -325,7 +325,7 @@ vector<array<char, 16>> aStar(vector<array<char, 16>> start,
 	return extendedPath;
 }
 
-void progressMessage(int status) {
+void progressMessage(char status) {
 	if (status) {
 		cout << "\nInput error:" << endl;
 		switch (status) {
@@ -347,13 +347,13 @@ void progressMessage(int status) {
 	}
 }
 
-int inversions(array<char, 16> inputGame) {
-	int invCount = 0;
-	for (int i = 0; i < 15; i++) {
+char inversions(array<char, 16> inputGame) {
+	char invCount = 0;
+	for (char i = 0; i < 15; i++) {
 		if (inputGame[i] == 0) {
 			continue;
 		}
-		for (int j = i + 1; j < 16; j++) {
+		for (char j = i + 1; j < 16; j++) {
 			if (inputGame[j] == 0) {
 				continue;
 			}
@@ -384,25 +384,25 @@ bool isSolvable(array<char, 16> inputGame) {
 	 */
 
 	// get the empty space index
-	int emptyPos;
-	for (int i = 0; i < 16; i++) {
+	char emptyPos;
+	for (char i = 0; i < 16; i++) {
 		if (inputGame[i] == 0) {
 			emptyPos = i;
 			break;
 		}
 	}
-	int emptyRow = 4 - (emptyPos / 4); // counting from bottom
-	int invCount = inversions(inputGame);
+	char emptyRow = 4 - (emptyPos / 4); // counting from bottom
+	char invCount = inversions(inputGame);
 	bool solvable =
 			((!(emptyRow & 1) && (invCount & 1))
 					|| ((emptyRow & 1) && !(invCount & 1))) ? true : false;
 	return solvable;
 }
 
-int verifyInput(string rawInput) {
-	int status = 0;
+char verifyInput(string rawInput) {
+	char status = 0;
 	cout << "Checking input format..." << flush;
-	int noComma = count(rawInput.begin(), rawInput.end(), ',');
+	char noComma = count(rawInput.begin(), rawInput.end(), ',');
 	// check for more than required cells
 	if (noComma != 15) {
 		status = 1;
@@ -431,7 +431,7 @@ int verifyInput(string rawInput) {
 		} else {
 			cout << "OK" << endl << "Checking solvability..." << endl;
 			array<char, 16> inputGame;
-			int i = 0;
+			char i = 0;
 			for (string cell : validStream) {
 				inputGame[i] = (char) stoi(cell);
 				++i;
@@ -470,7 +470,7 @@ int main() {
 	cout << "===========================================================" << endl << endl;
 
 	string rawInput = getInput();
-	int status = verifyInput(rawInput);
+	char status = verifyInput(rawInput);
 	progressMessage(status);
 	if (!status) {
 		cout << "Solving...\n" << endl;
