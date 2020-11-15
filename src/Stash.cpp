@@ -1,9 +1,9 @@
 //============================================================================
 // Name        : Stash.cpp
 // Author      : Martins Anerua
-// Version     : 1.0.0
+// Version     : 1.1.0
 // Copyright   : MIT License
-// Description : Sliding Number Puzzle Solver
+// Description : 15 Puzzle Solver
 // Date Created: 23 October 2020 12:14
 //============================================================================
 
@@ -15,8 +15,6 @@
 #include <unordered_set>
 #include <queue>
 #include <algorithm>
-#include <stdio.h>
-#include <string>
 
 using namespace std;
 
@@ -61,8 +59,6 @@ int pathLength(vector<array<char, 16>> path, int meta) {
 					++hammingDistance;
 				}
 				manhattanDistance += abs(leaf[i] - (i + 1));
-			} else {
-				continue;
 			}
 		}
 		break;
@@ -73,16 +69,12 @@ int pathLength(vector<array<char, 16>> path, int meta) {
 					++hammingDistance;
 				}
 				manhattanDistance += abs(leaf[i] - (i + 1));
-			} else {
-				continue;
 			}
 		}
 		break;
 	case 16:
 		for (char i = 0; i < 16; i++) {
-			if (leaf[i] == 0) {
-				continue;
-			} else {
+			if (leaf[i] != 0) {
 				if (leaf[i] != (i + 1)) {
 					++hammingDistance;
 				}
@@ -97,20 +89,13 @@ int pathLength(vector<array<char, 16>> path, int meta) {
 
 bool rowSolved(array<char, 16> node, int row) {
 	for (char i = 0; i < 4; i++) {
-		if (node[(i % 4) + (row * 4)] == 0) {
+		char j = (i % 4) + (row * 4);
+		if ((node[j] == 0) || (node[j] != j + 1)) {
 			return false;
-		} else if (node[(i % 4) + (row * 4)] != (i % 4) + (row * 4) + 1) {
-			return false;
-		} else {
-			continue;
 		}
 	}
 
-	if (row == 0) {
-		return true;
-	} else {
-		return rowSolved(node, row - 1);
-	}
+	return (row == 0) ? true : rowSolved(node, row - 1);
 }
 
 vector<array<char, 16>> getConnectedNodes(array<char, 16> node) {
@@ -167,24 +152,15 @@ string printNode(array<char, 16> node) {
 	ss << ".===================.\n";
 	ss << "| ";
 	for (char i = 0; i < 16; i++) {
-		if (node[i] < 10) {
-			if (node[i] != 0) {
-				ss << (int) node[i];
-			} else {
-				ss << " ";
-			}
+		if (node[i] != 0)
+			ss << (int) node[i];
+		else
 			ss << " ";
-		} else {
-			if (node[i] != 0) {
-				ss << (int) node[i];
-			} else {
-				ss << " ";
-			}
-		}
+		if (node[i] < 10)
+			ss << " ";
 		ss << " | ";
-		if ((i % 4) == 3 && (i != 15)) {
+		if ((i % 4) == 3 && (i != 15))
 			ss << "\n|-------------------|\n| ";
-		}
 	}
 	ss << "\n*===================*\n";
 	return ss.str();
@@ -218,14 +194,12 @@ vector<array<char, 16>> aStarSecondRow(vector<array<char, 16>> start) {
 			extendedPath[extendedPath.size() - 2][5],
 			extendedPath[extendedPath.size() - 2][6],
 			extendedPath[extendedPath.size() - 2][7] };
-	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
+	extendedNodes.insert(extendedPath[extendedPath.size() - 2]);
 	while ((queue.size() > 0) && !(check == goal)) {
 		queue.pop();
 		array<char, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<char, 16>> connectedNodes = getConnectedNodes(leafNode);
-//		extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
-
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
 				vector<array<char, 16>> tempExtended = extendedPath;
@@ -234,7 +208,7 @@ vector<array<char, 16>> aStarSecondRow(vector<array<char, 16>> start) {
 				pathLengthArray.fill(pathLength(tempExtended, 1));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
-				extendedNodes.insert(connectedNodes[i]); //newly added
+				extendedNodes.insert(connectedNodes[i]);
 			}
 		}
 		extendedPath = queue.top();
@@ -248,7 +222,6 @@ vector<array<char, 16>> aStarSecondRow(vector<array<char, 16>> start) {
 
 vector<array<char, 16>> aStarFirstRow(vector<array<char, 16>> start) {
 	array<char, 4> goal = { 1, 2, 3, 4 };
-
 	auto cmp = [](vector<array<char, 16>> left, vector<array<char, 16>> right) {
 		return left.back()[0] > right.back()[0];
 	};
@@ -261,14 +234,12 @@ vector<array<char, 16>> aStarFirstRow(vector<array<char, 16>> start) {
 			extendedPath[extendedPath.size() - 2][1],
 			extendedPath[extendedPath.size() - 2][2],
 			extendedPath[extendedPath.size() - 2][3] };
-	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
+	extendedNodes.insert(extendedPath[extendedPath.size() - 2]);
 	while ((queue.size() > 0) && !(check == goal)) {
 		queue.pop();
 		array<char, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<char, 16>> connectedNodes = getConnectedNodes(leafNode);
-//		extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
-
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
 				vector<array<char, 16>> tempExtended = extendedPath;
@@ -277,7 +248,7 @@ vector<array<char, 16>> aStarFirstRow(vector<array<char, 16>> start) {
 				pathLengthArray.fill(pathLength(tempExtended, 0));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
-				extendedNodes.insert(connectedNodes[i]); //newly added
+				extendedNodes.insert(connectedNodes[i]);
 			}
 		}
 		extendedPath = queue.top();
@@ -300,15 +271,13 @@ vector<array<char, 16>> aStar(vector<array<char, 16>> start,
 	queue.push(start);
 	unordered_set<array<char, 16>> extendedNodes;
 	vector<array<char, 16>> extendedPath = start;
-	extendedNodes.insert(extendedPath[extendedPath.size() - 2]); // newly added
+	extendedNodes.insert(extendedPath[extendedPath.size() - 2]);
 	while ((queue.size() > 0)
 			&& !(extendedPath[extendedPath.size() - 2] == goal)) {
 		queue.pop();
 		array<char, 16> leafNode = extendedPath[extendedPath.size() - 2];
 		vector<array<char, 16>> connectedNodes = getConnectedNodes(leafNode);
-		// extendedNodes.insert(leafNode);
 		extendedPath.pop_back();
-
 		for (unsigned int i = 0; i < connectedNodes.size(); i++) {
 			if (!(extendedNodes.find(connectedNodes[i]) != extendedNodes.end())) {
 				vector<array<char, 16>> tempExtended = extendedPath;
@@ -317,7 +286,7 @@ vector<array<char, 16>> aStar(vector<array<char, 16>> start,
 				pathLengthArray.fill(pathLength(tempExtended, 16));
 				tempExtended.push_back(pathLengthArray);
 				queue.push(tempExtended);
-				extendedNodes.insert(connectedNodes[i]); //newly added
+				extendedNodes.insert(connectedNodes[i]);
 			}
 		}
 		extendedPath = queue.top();
@@ -336,8 +305,7 @@ void progressMessage(char status) {
 			cout << "\tOne or more invalid cell values provided" << endl;
 			break;
 		case 3:
-			cout << "\tInsufficient/duplicate valid cell values provided"
-					<< endl;
+			cout << "\tInsufficient/duplicate valid cell values provided" << endl;
 			break;
 		case 4:
 			cout << "\tPuzzle is unsolvable" << endl;
@@ -393,10 +361,7 @@ bool isSolvable(array<char, 16> inputGame) {
 	}
 	char emptyRow = 4 - (emptyPos / 4); // counting from bottom
 	char invCount = inversions(inputGame);
-	bool solvable =
-			((!(emptyRow & 1) && (invCount & 1))
-					|| ((emptyRow & 1) && !(invCount & 1))) ? true : false;
-	return solvable;
+	return ((!(emptyRow & 1) && (invCount & 1)) || ((emptyRow & 1) && !(invCount & 1))) ? true : false;
 }
 
 char verifyInput(string rawInput) {
@@ -418,11 +383,9 @@ char verifyInput(string rawInput) {
 			if (!(find(valids.begin(), valids.end(), intermediate)
 					!= valids.end())) {
 				status = 2;
-			} else {
-				if (!(find(validStream.begin(), validStream.end(), intermediate)
+			} else if (!(find(validStream.begin(), validStream.end(), intermediate)
 						!= validStream.end())) {
 					validStream.push_back(intermediate);
-				}
 			}
 		}
 		// check number of valid cell values
@@ -448,27 +411,24 @@ char verifyInput(string rawInput) {
 
 string getInput() {
 	string rawInput;
-	cout << "Input the game as a comma-separated sequence of cell values"
-			<< endl;
+	cout << "Input the game as a comma-separated sequence of cell values" << endl;
 	cout << "with the empty cell represented as 0" << endl;
 	cout << "Do not put spaces between commas and values:" << endl;
+	cout << "For example, a solved game would look like this:" << endl;
+	cout << "\t1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0" << endl;
+	cout << ">" << flush;
 	cin >> rawInput;
 	cout << endl;
 	return rawInput;
 }
 
 int main() {
-
-	array<char, 16> solved = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-			0 };
-
+	array<char, 16> solved = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0 };
 	array<char, 16> rootLength; // initial length
 	rootLength.fill(0);
-
 	cout << "===========================================================" << endl;
 	cout << "                     15 Puzzle Solver                      " << endl;
 	cout << "===========================================================" << endl << endl;
-
 	string rawInput = getInput();
 	char status = verifyInput(rawInput);
 	progressMessage(status);
@@ -476,15 +436,11 @@ int main() {
 		cout << "Solving...\n" << endl;
 		vector<array<char, 16>> inputPath = { inputState, rootLength };
 		clock_t startTime = clock();
-
-		vector<array<char, 16>> solution = aStar(
-				aStarSecondRow(aStarFirstRow(inputPath)), solved);
-
+		vector<array<char, 16>> solution = aStar(aStarSecondRow(aStarFirstRow(inputPath)), solved);
 		clock_t programTime = clock() - startTime;
 		cout << "Solution:" << endl;
 		cout << printPath(solution) << endl;
-		cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC
-				<< " seconds." << endl;
+		cout << "Program took: " << (float) programTime / CLOCKS_PER_SEC << " seconds." << endl;
 	}
 
 	return 0;
